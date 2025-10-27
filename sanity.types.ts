@@ -13,6 +13,29 @@
  */
 
 // Source: schema.json
+export type ChatSession = {
+  _id: string;
+  _type: "chatSession";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  email?: string;
+  sessionId?: string;
+  startedAt?: string;
+  lastActivityAt?: string;
+  messageHistory?: Array<{
+    role?: "user" | "assistant";
+    content?: string;
+    timestamp?: string;
+    messageId?: string;
+    _key: string;
+  }>;
+  metadata?: {
+    userAgent?: string;
+    referrer?: string;
+  };
+};
+
 export type Navigation = {
   _id: string;
   _type: "navigation";
@@ -637,7 +660,7 @@ export type SanityAssetSourceData = {
   url?: string;
 };
 
-export type AllSanitySchemaTypes = Navigation | SiteSettings | Contact | Service | Blog | Achievement | Certification | Testimonial | Education | Experience | Skill | Project | Profile | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
+export type AllSanitySchemaTypes = ChatSession | Navigation | SiteSettings | Contact | Service | Blog | Achievement | Certification | Testimonial | Education | Experience | Skill | Project | Profile | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
 export declare const internalGroqTypeReferenceTo: unique symbol;
 // Source: ./components/FloatingDock.tsx
 // Variable: NAVIGATION_QUERY
@@ -649,7 +672,7 @@ export type NAVIGATION_QUERYResult = Array<{
   isExternal: boolean | null;
 }>;
 
-// Source: ./components/chat/ChatWrapper.tsx
+// Source: ./components/chat/ChatWrapperClient.tsx
 // Variable: CHAT_PROFILE_QUERY
 // Query: *[_id == "singleton-profile"][0]{    _id,    _type,    _createdAt,    _updatedAt,    _rev,    firstName,    lastName,    headline,    shortBio,    email,    phone,    location,    availability,    socialLinks,    yearsOfExperience,    profileImage  }
 export type CHAT_PROFILE_QUERYResult = {
@@ -697,6 +720,23 @@ export type CHAT_PROFILE_QUERYResult = {
   headline: null;
   shortBio: null;
   email: null;
+  phone: null;
+  location: null;
+  availability: null;
+  socialLinks: null;
+  yearsOfExperience: null;
+  profileImage: null;
+} | {
+  _id: string;
+  _type: "chatSession";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  firstName: null;
+  lastName: null;
+  headline: null;
+  shortBio: null;
+  email: string | null;
   phone: null;
   location: null;
   availability: null;

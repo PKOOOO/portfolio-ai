@@ -1,7 +1,6 @@
 "use client";
 
-import { useClerk, useUser } from "@clerk/nextjs";
-import { IconLogout, IconMenu2, IconX } from "@tabler/icons-react";
+import { IconMenu2, IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
 import { DynamicIcon } from "./DynamicIcon";
@@ -39,8 +38,6 @@ const getVisibleLinks = (links: DockLink[], maxItems: number) => {
 };
 
 export function FloatingDockClient({ navItems }: FloatingDockClientProps) {
-  const { isSignedIn } = useUser();
-  const { signOut } = useClerk();
   const { open, isMobile, openMobile } = useSidebar();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [desktopMoreMenuOpen, setDesktopMoreMenuOpen] = useState(false);
@@ -48,23 +45,12 @@ export function FloatingDockClient({ navItems }: FloatingDockClientProps) {
 
   const isSidebarOpen = isMobile ? openMobile : open;
 
-  const links: DockLink[] = [
-    ...navItems.map((item) => ({
-      title: item.title || "",
-      href: item.href || "#",
-      icon: <DynamicIcon iconName={item.icon || "IconHome"} />,
-      isExternal: item.isExternal,
-    })),
-    ...(isSignedIn && !isSidebarOpen
-      ? [
-          {
-            title: "Sign Out",
-            icon: <IconLogout className="h-full w-full" />,
-            onClick: () => signOut(),
-          },
-        ]
-      : []),
-  ];
+  const links: DockLink[] = navItems.map((item) => ({
+    title: item.title || "",
+    href: item.href || "#",
+    icon: <DynamicIcon iconName={item.icon || "IconHome"} />,
+    isExternal: item.isExternal,
+  }));
 
   const desktop = getVisibleLinks(links, MAX_VISIBLE_ITEMS_DESKTOP);
   const mobile = getVisibleLinks(links, MAX_VISIBLE_ITEMS_MOBILE);

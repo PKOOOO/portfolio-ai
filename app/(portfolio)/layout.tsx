@@ -1,4 +1,3 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SanityLive } from "@/sanity/lib/live";
@@ -34,44 +33,42 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en" suppressHydrationWarning className="dark">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+    <html lang="en" suppressHydrationWarning className="dark">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          forcedTheme="dark"
+          enableSystem={false}
+          disableTransitionOnChange
         >
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            forcedTheme="dark"
-            enableSystem={false}
-            disableTransitionOnChange
-          >
-            <Script
-              src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js"
-              strategy="afterInteractive"
-            />
+          <Script
+            src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js"
+            strategy="afterInteractive"
+          />
 
-            <SidebarProvider defaultOpen={false}>
-              <SidebarInset className="">{children}</SidebarInset>
+          <SidebarProvider defaultOpen={false}>
+            <SidebarInset className="">{children}</SidebarInset>
 
-              <AppSidebar side="right" />
+            <AppSidebar side="right" />
 
-              <FloatingDock />
-              <SidebarToggle />
-            </SidebarProvider>
+            <FloatingDock />
+            <SidebarToggle />
+          </SidebarProvider>
 
-            {/* Live content API */}
-            <SanityLive />
+          {/* Live content API */}
+          <SanityLive />
 
-            {(await draftMode()).isEnabled && (
-              <>
-                <VisualEditing />
-                <DisableDraftMode />
-              </>
-            )}
-          </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+          {(await draftMode()).isEnabled && (
+            <>
+              <VisualEditing />
+              <DisableDraftMode />
+            </>
+          )}
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }
