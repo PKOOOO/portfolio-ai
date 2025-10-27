@@ -1,16 +1,20 @@
 "use client";
 import type React from "react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 export const BackgroundRippleEffect = ({
   rows = 8,
   cols = 27,
   cellSize = 56,
+  auto = false,
+  autoInterval = 3000,
 }: {
   rows?: number;
   cols?: number;
   cellSize?: number;
+  auto?: boolean;
+  autoInterval?: number;
 }) => {
   const [clickedCell, setClickedCell] = useState<{
     row: number;
@@ -18,6 +22,20 @@ export const BackgroundRippleEffect = ({
   } | null>(null);
   const [rippleKey, setRippleKey] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+
+  // Auto ripple effect
+  useEffect(() => {
+    if (!auto) return;
+
+    const interval = setInterval(() => {
+      const randomRow = Math.floor(Math.random() * rows);
+      const randomCol = Math.floor(Math.random() * cols);
+      setClickedCell({ row: randomRow, col: randomCol });
+      setRippleKey((k) => k + 1);
+    }, autoInterval);
+
+    return () => clearInterval(interval);
+  }, [auto, autoInterval, rows, cols]);
 
   return (
     <div

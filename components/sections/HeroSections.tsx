@@ -39,7 +39,7 @@ export async function HeroSection() {
       className="relative min-h-screen flex items-center justify-center px-6 py-20 overflow-hidden"
     >
       {/* Background Ripple Effect */}
-      <BackgroundRippleEffect rows={8} cols={27} cellSize={56} />
+      <BackgroundRippleEffect rows={8} cols={27} cellSize={56} auto={true} autoInterval={3000} />
       <div className="relative z-10 container mx-auto max-w-6xl">
         <div className="@container">
           <div className="grid grid-cols-1 @3xl:grid-cols-2 gap-8 @lg:gap-12 items-center">
@@ -97,16 +97,6 @@ export async function HeroSection() {
                       className="px-4 py-2 @md/hero:px-6 @md/hero:py-3 rounded-lg border hover:bg-accent transition-colors text-sm @md/hero:text-base"
                     >
                       Twitter
-                    </Link>
-                  )}
-                  {profile.socialLinks.website && (
-                    <Link
-                      href={profile.socialLinks.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 @md/hero:px-6 @md/hero:py-3 rounded-lg border hover:bg-accent transition-colors text-sm @md/hero:text-base"
-                    >
-                      Website
                     </Link>
                   )}
                 </div>
