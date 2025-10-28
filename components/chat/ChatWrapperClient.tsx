@@ -28,7 +28,7 @@ const CHAT_PROFILE_QUERY = defineQuery(`*[_id == "singleton-profile"][0]{
 
 export default function ChatWrapperClient() {
   const [email, setEmail] = useState<string>("");
-  const [sessionId] = useState<string>(() => `session-${Date.now()}-${Math.random()}`);
+  const [sessionId, setSessionId] = useState<string>("");
   const [profile, setProfile] = useState<CHAT_PROFILE_QUERYResult | null>(null);
 
   useEffect(() => {
@@ -36,6 +36,16 @@ export default function ChatWrapperClient() {
     const savedEmail = localStorage.getItem("chatUserEmail");
     if (savedEmail) {
       setEmail(savedEmail);
+    }
+
+    // Ensure a stable sessionId across reloads
+    const existingSessionId = localStorage.getItem("chatSessionId");
+    if (existingSessionId) {
+      setSessionId(existingSessionId);
+    } else {
+      const newId = `session-${Date.now()}-${Math.random()}`;
+      localStorage.setItem("chatSessionId", newId);
+      setSessionId(newId);
     }
 
     // Fetch profile data
@@ -59,7 +69,9 @@ export default function ChatWrapperClient() {
         <SidebarToggle />
       </div>
 
-      {profile && <Chat profile={profile} email={email} sessionId={sessionId} />}
+      {profile && sessionId && (
+        <Chat profile={profile} email={email} sessionId={sessionId} />
+      )}
     </div>
   );
 }

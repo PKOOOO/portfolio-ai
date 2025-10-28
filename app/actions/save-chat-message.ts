@@ -19,7 +19,7 @@ export async function saveChatMessage(
       return { success: false, error: "Missing required fields" };
     }
 
-    // Check if session already exists
+    // Check if legacy chatSession exists
     const existingSession = await serverClient.fetch(
       `*[_type == "chatSession" && sessionId == $sessionId][0]`,
       { sessionId },
@@ -45,6 +45,42 @@ export async function saveChatMessage(
         startedAt: now,
         lastActivityAt: now,
         messageHistory: messages,
+      });
+    }
+
+    // Also upsert the new conversation document for Studio visibility
+    const lastTimestamp = messages[messages.length - 1]?.timestamp || now;
+    const existingConversation = await serverClient.fetch(
+      `*[_type == "conversation" && sessionId == $sessionId][0]`,
+      { sessionId },
+    );
+
+    const conversationPayload = {
+      email,
+      sessionId,
+      status: "active" as const,
+      startedAt: existingConversation?.startedAt || now,
+      lastMessageAt: lastTimestamp,
+      messages: messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp,
+      })),
+    };
+
+    if (existingConversation?._id) {
+      await serverClient
+        .patch(existingConversation._id)
+        .set({
+          lastMessageAt: conversationPayload.lastMessageAt,
+          messages: conversationPayload.messages,
+          status: conversationPayload.status,
+        })
+        .commit();
+    } else {
+      await serverClient.create({
+        _type: "conversation",
+        ...conversationPayload,
       });
     }
 

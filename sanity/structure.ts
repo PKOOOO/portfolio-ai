@@ -21,6 +21,28 @@ export const structure: StructureResolver = (S) =>
   S.list()
     .title("Portfolio Content")
     .items([
+      // AI Conversations - placed at the top for quick access
+      S.listItem()
+        .title("AI Conversations")
+        .icon(CommentIcon)
+        .schemaType("conversation")
+        .child(
+          S.documentTypeList("conversation")
+            .title("AI Conversations")
+            .defaultOrdering([{ field: "lastMessageAt", direction: "desc" }])
+        ),
+
+      // Legacy: Chat Sessions (read-only reference while transitioning)
+      S.listItem()
+        .title("Chat Sessions (Legacy)")
+        .icon(CommentIcon)
+        .schemaType("chatSession")
+        .child(
+          S.documentTypeList("chatSession")
+            .title("Chat Sessions")
+            .defaultOrdering([{ field: "lastActivityAt", direction: "desc" }])
+        ),
+
       // Profile (Singleton)
       S.listItem()
         .title("Profile")

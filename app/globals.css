@@ -149,3 +149,24 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Emoji styling for ChatKit and all content */
+@layer base {
+  /* Force colored emoji rendering across all browsers */
+  body,
+  .chatkit,
+  [class*="chatkit"],
+  [data-chatkit],
+  p,
+  span,
+  div {
+    font-family: var(--font-geist-sans), "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif;
+  }
+  
+  /* Ensure emojis don't inherit text color */
+  body *:where(:not(code):not(pre):not(kbd):not(samp)) {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}

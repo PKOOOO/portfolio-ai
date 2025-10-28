@@ -6,6 +6,7 @@ export const serverClient = createClient({
   projectId,
   dataset,
   apiVersion,
-  useCdn: true,
+  // Disable CDN for server-side writes/reads to avoid stale reads during upsert flows
+  useCdn: false,
   token: process.env.SANITY_SERVER_API_TOKEN,
 });

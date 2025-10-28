@@ -13,6 +13,30 @@
  */
 
 // Source: schema.json
+export type Conversation = {
+  _id: string;
+  _type: "conversation";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  email?: string;
+  sessionId?: string;
+  status?: "active" | "ended";
+  startedAt?: string;
+  lastMessageAt?: string;
+  messages?: Array<{
+    role?: "user" | "assistant";
+    content?: string;
+    timestamp?: string;
+    _key: string;
+  }>;
+  metadata?: {
+    userAgent?: string;
+    ipAddress?: string;
+    source?: string;
+  };
+};
+
 export type ChatSession = {
   _id: string;
   _type: "chatSession";
@@ -660,7 +684,7 @@ export type SanityAssetSourceData = {
   url?: string;
 };
 
-export type AllSanitySchemaTypes = ChatSession | Navigation | SiteSettings | Contact | Service | Blog | Achievement | Certification | Testimonial | Education | Experience | Skill | Project | Profile | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
+export type AllSanitySchemaTypes = Conversation | ChatSession | Navigation | SiteSettings | Contact | Service | Blog | Achievement | Certification | Testimonial | Education | Experience | Skill | Project | Profile | SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityImageHotspot | SanityImageCrop | SanityFileAsset | SanityImageAsset | SanityImageMetadata | Geopoint | Slug | SanityAssetSourceData;
 export declare const internalGroqTypeReferenceTo: unique symbol;
 // Source: ./components/FloatingDock.tsx
 // Variable: NAVIGATION_QUERY
@@ -746,6 +770,23 @@ export type CHAT_PROFILE_QUERYResult = {
 } | {
   _id: string;
   _type: "contact";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  firstName: null;
+  lastName: null;
+  headline: null;
+  shortBio: null;
+  email: string | null;
+  phone: null;
+  location: null;
+  availability: null;
+  socialLinks: null;
+  yearsOfExperience: null;
+  profileImage: null;
+} | {
+  _id: string;
+  _type: "conversation";
   _createdAt: string;
   _updatedAt: string;
   _rev: string;

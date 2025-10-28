@@ -3,6 +3,7 @@ import achievement from "./achievement";
 import blog from "./blog";
 import certification from "./certification";
 import chatSession from "./chatSession";
+import conversation from "./conversation";
 import contact from "./contact";
 import education from "./education";
 import experience from "./experience";
@@ -30,5 +31,6 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     siteSettings,
     navigation,
     chatSession,
+    conversation,
   ],
 };
