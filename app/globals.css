@@ -134,7 +134,7 @@
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
   }
- 
+
   .dark {
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);
@@ -160,9 +160,11 @@
   p,
   span,
   div {
-    font-family: var(--font-geist-sans), "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif;
+    font-family:
+      var(--font-geist-sans), "Apple Color Emoji", "Segoe UI Emoji",
+      "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif;
   }
-  
+
   /* Ensure emojis don't inherit text color */
   body *:where(:not(code):not(pre):not(kbd):not(samp)) {
     -webkit-font-smoothing: antialiased;

@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     };
 
     const { email, sessionId, messages } = body || {};
-    
+
     console.log("\n========================================");
     console.log("[API /chat/log] 📥 RECEIVED REQUEST");
     console.log("========================================");
@@ -26,14 +26,22 @@ export async function POST(request: Request) {
     console.log("Message Count:", messages?.length);
     console.log("Latest Message:", messages?.[messages.length - 1]);
     console.log("========================================\n");
-    
-    if (!email || !sessionId || !Array.isArray(messages) || messages.length === 0) {
+
+    if (
+      !email ||
+      !sessionId ||
+      !Array.isArray(messages) ||
+      messages.length === 0
+    ) {
       console.error("\n❌ VALIDATION FAILED:");
       console.error("- Email:", email || "MISSING");
       console.error("- SessionID:", sessionId || "MISSING");
       console.error("- Messages:", messages?.length || "MISSING/EMPTY");
       console.error("\n");
-      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "Missing required fields" },
+        { status: 400 },
+      );
     }
 
     const now = new Date().toISOString();
@@ -59,7 +67,9 @@ export async function POST(request: Request) {
       startedAt: existingConversation?.startedAt || now,
       lastMessageAt: lastTimestamp,
       messages: messages.map((m) => ({
-        _key: m.messageId || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        _key:
+          m.messageId ||
+          `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         role: m.role,
         content: m.content,
         timestamp: m.timestamp,
@@ -67,10 +77,16 @@ export async function POST(request: Request) {
     };
 
     if (existingConversation?._id) {
-      console.log("\n📝 UPDATING existing conversation:", existingConversation._id);
-      console.log("- Previous message count:", existingConversation.messages?.length || 0);
+      console.log(
+        "\n📝 UPDATING existing conversation:",
+        existingConversation._id,
+      );
+      console.log(
+        "- Previous message count:",
+        existingConversation.messages?.length || 0,
+      );
       console.log("- New message count:", conversationPayload.messages.length);
-      
+
       await serverClient
         .patch(existingConversation._id)
         .set({
@@ -79,7 +95,7 @@ export async function POST(request: Request) {
           status: conversationPayload.status,
         })
         .commit();
-      
+
       console.log("✅ SUCCESSFULLY UPDATED conversation!");
       console.log(`   Email: ${email}`);
       console.log(`   Messages: ${conversationPayload.messages.length}`);
@@ -89,9 +105,12 @@ export async function POST(request: Request) {
       console.log("- Email:", email);
       console.log("- Session ID:", sessionId);
       console.log("- Initial messages:", conversationPayload.messages.length);
-      
-      const result = await serverClient.create({ _type: "conversation", ...conversationPayload });
-      
+
+      const result = await serverClient.create({
+        _type: "conversation",
+        ...conversationPayload,
+      });
+
       console.log("✅ SUCCESSFULLY CREATED new conversation!");
       console.log(`   Email: ${email}`);
       console.log(`   Document ID: ${result._id}`);
@@ -104,10 +123,12 @@ export async function POST(request: Request) {
     console.error(error);
     console.error("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌\n");
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Failed to save message" },
+      {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Failed to save message",
+      },
       { status: 500 },
     );
   }
 }
-
-

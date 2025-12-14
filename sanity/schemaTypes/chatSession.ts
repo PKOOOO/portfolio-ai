@@ -118,7 +118,9 @@ export default defineType({
       messageCount: "messageHistory",
     },
     prepare({ email, startedAt, messageCount }) {
-      const date = startedAt ? new Date(startedAt).toLocaleDateString() : "Unknown";
+      const date = startedAt
+        ? new Date(startedAt).toLocaleDateString()
+        : "Unknown";
       const count = Array.isArray(messageCount) ? messageCount.length : 0;
       return {
         title: email || "Unknown Email",
@@ -144,4 +146,3 @@ export default defineType({
     },
   ],
 });
-

@@ -1,13 +1,10 @@
-
+import Link from "next/link";
 import { defineQuery } from "next-sanity";
 import { BackgroundRippleEffect } from "@/components/ui/background-ripple-effect";
 import { LayoutTextFlip } from "@/components/ui/layout-text-flip";
-
-import { sanityFetch } from "@/sanity/lib/live";
-import Link from "next/link";
-import { ProfileImage } from "../ProfileImage";
 import { urlFor } from "@/sanity/lib/image";
-
+import { sanityFetch } from "@/sanity/lib/live";
+import { ProfileImage } from "../ProfileImage";
 
 const HERO_QUERY = defineQuery(`*[_id == "singleton-profile"][0]{
   firstName,
@@ -39,7 +36,13 @@ export async function HeroSection() {
       className="relative min-h-screen flex items-center justify-center px-6 py-20 overflow-hidden"
     >
       {/* Background Ripple Effect */}
-      <BackgroundRippleEffect rows={8} cols={40} cellSize={80} auto={true} autoInterval={2000} />
+      <BackgroundRippleEffect
+        rows={8}
+        cols={40}
+        cellSize={80}
+        auto={true}
+        autoInterval={2000}
+      />
       <div className="relative z-10 container mx-auto max-w-6xl">
         <div className="@container">
           <div className="grid grid-cols-1 @3xl:grid-cols-2 gap-8 @lg:gap-12 items-center">
@@ -138,7 +141,6 @@ export async function HeroSection() {
           </div>
         </div>
       </div>
-      
     </section>
   );
 }

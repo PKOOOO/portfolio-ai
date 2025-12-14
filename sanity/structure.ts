@@ -29,7 +29,7 @@ export const structure: StructureResolver = (S) =>
         .child(
           S.documentTypeList("conversation")
             .title("AI Conversations")
-            .defaultOrdering([{ field: "lastMessageAt", direction: "desc" }])
+            .defaultOrdering([{ field: "lastMessageAt", direction: "desc" }]),
         ),
 
       // Legacy: Chat Sessions (read-only reference while transitioning)
@@ -40,7 +40,7 @@ export const structure: StructureResolver = (S) =>
         .child(
           S.documentTypeList("chatSession")
             .title("Chat Sessions")
-            .defaultOrdering([{ field: "lastActivityAt", direction: "desc" }])
+            .defaultOrdering([{ field: "lastActivityAt", direction: "desc" }]),
         ),
 
       // Profile (Singleton)

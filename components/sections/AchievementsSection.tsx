@@ -66,7 +66,7 @@ export async function AchievementsSection() {
 
   // Separate featured and regular achievements
   const featured = achievements.filter((a) => a.featured);
-  const regular = achievements.filter((a) => !a.featured);
+  const _regular = achievements.filter((a) => !a.featured);
 
   return (
     <section id="achievements" className="py-20 px-6 bg-muted/30">

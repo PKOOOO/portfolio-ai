@@ -66,7 +66,7 @@ export async function ServicesSection() {
 
   // Separate featured and regular services
   const featured = services.filter((s) => s.featured);
-  const regular = services.filter((s) => !s.featured);
+  const _regular = services.filter((s) => !s.featured);
 
   return (
     <section id="services" className="py-20 px-6">

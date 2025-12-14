@@ -1,11 +1,11 @@
 "use client";
 
 import { defineQuery } from "next-sanity";
+import { useEffect, useState } from "react";
 import Chat from "@/components/chat/Chat";
 import { client } from "@/sanity/lib/client";
-import SidebarToggle from "../SideBarToggle";
-import { useState, useEffect } from "react";
 import type { CHAT_PROFILE_QUERYResult } from "@/sanity.types";
+import SidebarToggle from "../SideBarToggle";
 
 const CHAT_PROFILE_QUERY = defineQuery(`*[_id == "singleton-profile"][0]{
     _id,
@@ -78,4 +78,3 @@ export default function ChatWrapperClient() {
     </div>
   );
 }
-

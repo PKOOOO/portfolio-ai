@@ -1,10 +1,10 @@
 "use client";
 
 import { ChatKit, useChatKit } from "@openai/chatkit-react";
+import { useEffect, useRef } from "react";
 import { createSession } from "@/app/actions/create-session";
 import type { CHAT_PROFILE_QUERYResult } from "@/sanity.types";
 import { useSidebar } from "../ui/sidebar";
-import { useRef, useEffect } from "react";
 
 export function Chat({
   profile,
@@ -16,7 +16,14 @@ export function Chat({
   sessionId: string;
 }) {
   const { toggleSidebar } = useSidebar();
-  const messageHistoryRef = useRef<Array<{ role: "user" | "assistant"; content: string; timestamp: string; messageId: string }>>([]);
+  const messageHistoryRef = useRef<
+    Array<{
+      role: "user" | "assistant";
+      content: string;
+      timestamp: string;
+      messageId: string;
+    }>
+  >([]);
   const userEmailRef = useRef<string>(email);
   const needsEmailRef = useRef<boolean>(!email);
 
@@ -28,9 +35,7 @@ export function Chat({
     }
 
     // The .filter(Boolean) removes all falsy values from the array, so if the firstName or lastName is not set, it will be removed
-    const fullName = [profile.firstName]
-      .filter(Boolean)
-      .join(" ");
+    const fullName = [profile.firstName].filter(Boolean).join(" ");
 
     return `Yow! I'm ${fullName}. Please share your email to start our conversation.`;
   };
@@ -39,7 +44,8 @@ export function Chat({
     api: {
       getClientSecret: async (_existingSecret: string | undefined) => {
         // Use temporary email if we don't have one yet
-        const tempEmail = userEmailRef.current || `temp-${Date.now()}@pending.local`;
+        const tempEmail =
+          userEmailRef.current || `temp-${Date.now()}@pending.local`;
         return createSession(tempEmail);
       },
     },
@@ -47,28 +53,32 @@ export function Chat({
       greeting: needsEmailRef.current
         ? "Hi! To start chatting, please provide your email address so I can track our conversation."
         : getGreeting(),
-      prompts: needsEmailRef.current ? [] : [
-        {
-          icon: "suitcase",
-          label: "What's your experience?",
-          prompt: "Tell me about your professional experience and previous roles",
-        },
-        {
-          icon: "square-code",
-          label: "What skills do you have?",
-          prompt: "What technologies and programming languages do you specialize in?",
-        },
-        {
-          icon: "cube",
-          label: "What have you built?",
-          prompt: "Show me some of your most interesting projects",
-        },
-        {
-          icon: "profile",
-          label: "Who are you?",
-          prompt: "Tell me more about yourself and your background",
-        },
-      ],
+      prompts: needsEmailRef.current
+        ? []
+        : [
+            {
+              icon: "suitcase",
+              label: "What's your experience?",
+              prompt:
+                "Tell me about your professional experience and previous roles",
+            },
+            {
+              icon: "square-code",
+              label: "What skills do you have?",
+              prompt:
+                "What technologies and programming languages do you specialize in?",
+            },
+            {
+              icon: "cube",
+              label: "What have you built?",
+              prompt: "Show me some of your most interesting projects",
+            },
+            {
+              icon: "profile",
+              label: "Who are you?",
+              prompt: "Tell me more about yourself and your background",
+            },
+          ],
     },
     // Note: ChatKit event handlers depend on available events
     // Common events might be: onMessage, onUserMessage, onResponse
@@ -78,16 +88,22 @@ export function Chat({
       // Debug: observe raw message events from ChatKit
       try {
         console.log("[Chat:onMessage] raw:", JSON.stringify(message));
-      } catch { }
+      } catch {}
       const messageContent = message.content || message.text || "";
       const messageRole = (message.role || "user") as "user" | "assistant";
 
-      console.log("[Chat:onMessage] Processing:", { role: messageRole, content: messageContent, needsEmail: needsEmailRef.current });
+      console.log("[Chat:onMessage] Processing:", {
+        role: messageRole,
+        content: messageContent,
+        needsEmail: needsEmailRef.current,
+      });
 
       // Check if this is a user message and we need email
       if (messageRole === "user" && needsEmailRef.current) {
         console.log("[Chat:onMessage] Checking for email in message...");
-        const emailMatch = messageContent.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
+        const emailMatch = messageContent.match(
+          /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
+        );
         console.log("[Chat:onMessage] Email match result:", emailMatch);
         if (emailMatch) {
           const extractedEmail = emailMatch[0];
@@ -103,7 +119,10 @@ export function Chat({
               messageId: `${Date.now()}-${Math.random()}`,
             };
             messageHistoryRef.current.push(bootstrap);
-            console.debug("[Chat:email-captured] creating conversation with bootstrap message", bootstrap);
+            console.debug(
+              "[Chat:email-captured] creating conversation with bootstrap message",
+              bootstrap,
+            );
             const res = await fetch("/api/chat/log", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -115,7 +134,11 @@ export function Chat({
             });
             if (!res.ok) {
               const errText = await res.text();
-              console.error("/api/chat/log failed (email-captured):", res.status, errText);
+              console.error(
+                "/api/chat/log failed (email-captured):",
+                res.status,
+                errText,
+              );
             }
           } catch (e) {
             console.error("Failed to create conversation on email capture:", e);
@@ -129,7 +152,8 @@ export function Chat({
         role: messageRole,
         content: messageContent,
         timestamp: new Date().toISOString(),
-        messageId: message.id || message.messageId || `${Date.now()}-${Math.random()}`,
+        messageId:
+          message.id || message.messageId || `${Date.now()}-${Math.random()}`,
       };
 
       messageHistoryRef.current.push(messageData);
@@ -164,7 +188,7 @@ export function Chat({
     onUserMessage: async (message: any) => {
       try {
         console.debug("[Chat:onUserMessage] raw:", JSON.stringify(message));
-      } catch { }
+      } catch {}
       const content = message.text || "";
       const msg = {
         role: "user" as const,
@@ -176,8 +200,15 @@ export function Chat({
       console.debug("[Chat:onUserMessage] appended:", msg);
       try {
         const currentEmail = userEmailRef.current || "pending@temp.local";
-        const payload = { email: currentEmail, sessionId, messages: messageHistoryRef.current };
-        console.debug("[Chat:onUserMessage] POST /api/chat/log payload:", payload);
+        const payload = {
+          email: currentEmail,
+          sessionId,
+          messages: messageHistoryRef.current,
+        };
+        console.debug(
+          "[Chat:onUserMessage] POST /api/chat/log payload:",
+          payload,
+        );
         const res = await fetch("/api/chat/log", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -185,7 +216,11 @@ export function Chat({
         });
         if (!res.ok) {
           const errText = await res.text();
-          console.error("/api/chat/log failed (onUserMessage):", res.status, errText);
+          console.error(
+            "/api/chat/log failed (onUserMessage):",
+            res.status,
+            errText,
+          );
         }
         console.debug("[Chat:onUserMessage] /api/chat/log status:", res.status);
       } catch (error) {
@@ -197,7 +232,7 @@ export function Chat({
     onResponse: async (response: any) => {
       try {
         console.debug("[Chat:onResponse] raw:", JSON.stringify(response));
-      } catch { }
+      } catch {}
       const content = response.text || "";
       const msg = {
         role: "assistant" as const,
@@ -209,7 +244,11 @@ export function Chat({
       console.debug("[Chat:onResponse] appended:", msg);
       try {
         const currentEmail = userEmailRef.current || "pending@temp.local";
-        const payload = { email: currentEmail, sessionId, messages: messageHistoryRef.current };
+        const payload = {
+          email: currentEmail,
+          sessionId,
+          messages: messageHistoryRef.current,
+        };
         console.debug("[Chat:onResponse] POST /api/chat/log payload:", payload);
         const res = await fetch("/api/chat/log", {
           method: "POST",
@@ -218,7 +257,11 @@ export function Chat({
         });
         if (!res.ok) {
           const errText = await res.text();
-          console.error("/api/chat/log failed (onResponse):", res.status, errText);
+          console.error(
+            "/api/chat/log failed (onResponse):",
+            res.status,
+            errText,
+          );
         }
         console.debug("[Chat:onResponse] /api/chat/log status:", res.status);
       } catch (error) {
@@ -230,17 +273,24 @@ export function Chat({
     onThreadEvent: async (event: any) => {
       try {
         console.debug("[Chat:onThreadEvent]", event?.type);
-      } catch { }
+      } catch {}
       try {
         // Attempt to normalize into a message when possible
-        const maybeRole = event?.message?.role as "user" | "assistant" | undefined;
-        const maybeText = event?.message?.content?.[0]?.text?.value
-          || event?.output_text
-          || event?.delta
-          || "";
+        const maybeRole = event?.message?.role as
+          | "user"
+          | "assistant"
+          | undefined;
+        const maybeText =
+          event?.message?.content?.[0]?.text?.value ||
+          event?.output_text ||
+          event?.delta ||
+          "";
         if (!maybeText) return;
         const msg = {
-          role: (maybeRole === "user" || maybeRole === "assistant") ? maybeRole : "assistant" as const,
+          role:
+            maybeRole === "user" || maybeRole === "assistant"
+              ? maybeRole
+              : ("assistant" as const),
           content: String(maybeText),
           timestamp: new Date().toISOString(),
           messageId: `${Date.now()}-${Math.random()}`,
@@ -248,7 +298,11 @@ export function Chat({
         messageHistoryRef.current.push(msg);
         console.debug("[Chat:onThreadEvent] appended:", msg);
         const currentEmail = userEmailRef.current || "pending@temp.local";
-        const payload = { email: currentEmail, sessionId, messages: messageHistoryRef.current };
+        const payload = {
+          email: currentEmail,
+          sessionId,
+          messages: messageHistoryRef.current,
+        };
         const res = await fetch("/api/chat/log", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -256,7 +310,11 @@ export function Chat({
         });
         if (!res.ok) {
           const errText = await res.text();
-          console.error("/api/chat/log failed (onThreadEvent):", res.status, errText);
+          console.error(
+            "/api/chat/log failed (onThreadEvent):",
+            res.status,
+            errText,
+          );
         }
         console.debug("[Chat:onThreadEvent] /api/chat/log status:", res.status);
       } catch (err) {
@@ -310,9 +368,13 @@ export function Chat({
       try {
         // Look for all message elements in the ChatKit DOM
         // ChatKit uses <article data-thread-turn="user|assistant"> for messages
-        const messageElements = document.querySelectorAll('article[data-thread-turn]');
+        const messageElements = document.querySelectorAll(
+          "article[data-thread-turn]",
+        );
 
-        console.log(`[Chat:polling] Found ${messageElements.length} message elements`);
+        console.log(
+          `[Chat:polling] Found ${messageElements.length} message elements`,
+        );
 
         for (const element of Array.from(messageElements)) {
           const textContent = element.textContent?.trim() || "";
@@ -321,14 +383,20 @@ export function Chat({
           seenMessages.add(textContent);
 
           // Determine if this is a user or assistant message from data-thread-turn attribute
-          const threadTurn = element.getAttribute('data-thread-turn');
-          const role: "user" | "assistant" = threadTurn === "user" ? "user" : "assistant";
+          const threadTurn = element.getAttribute("data-thread-turn");
+          const role: "user" | "assistant" =
+            threadTurn === "user" ? "user" : "assistant";
 
-          console.log(`[Chat:polling] New ${role} message:`, textContent.substring(0, 100));
+          console.log(
+            `[Chat:polling] New ${role} message:`,
+            textContent.substring(0, 100),
+          );
 
           // Check for email in user messages
           if (role === "user" && needsEmailRef.current) {
-            const emailMatch = textContent.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
+            const emailMatch = textContent.match(
+              /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
+            );
             if (emailMatch) {
               const extractedEmail = emailMatch[0];
               console.log(`[Chat:polling] 📧 EMAIL FOUND: ${extractedEmail}`);
@@ -360,7 +428,10 @@ export function Chat({
                 console.log("[Chat:polling] ✅ Successfully saved to Sanity!");
                 setTimeout(() => window.location.reload(), 1000);
               } else {
-                console.error("[Chat:polling] ❌ Failed to save:", await res.text());
+                console.error(
+                  "[Chat:polling] ❌ Failed to save:",
+                  await res.text(),
+                );
               }
               return;
             }

@@ -92,10 +92,16 @@ export default defineType({
             }),
           ],
           preview: {
-            select: { role: "role", content: "content", timestamp: "timestamp" },
+            select: {
+              role: "role",
+              content: "content",
+              timestamp: "timestamp",
+            },
             prepare({ role, content, timestamp }) {
               const roleEmoji = role === "user" ? "👤" : "🤖";
-              const when = timestamp ? new Date(timestamp).toLocaleString() : "";
+              const when = timestamp
+                ? new Date(timestamp).toLocaleString()
+                : "";
               return {
                 title: `${roleEmoji} ${role}`,
                 subtitle: `${when} • ${(content || "").slice(0, 80)}`,
@@ -167,5 +173,3 @@ export default defineType({
     },
   ],
 });
-
-
