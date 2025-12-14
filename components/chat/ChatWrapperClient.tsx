@@ -39,11 +39,14 @@ export default function ChatWrapperClient() {
     }
 
     // Ensure a stable sessionId across reloads
+    // If no email, create a new session (fresh start)
     const existingSessionId = localStorage.getItem("chatSessionId");
-    if (existingSessionId) {
+    if (existingSessionId && savedEmail) {
+      // Only reuse session if we have an email
       setSessionId(existingSessionId);
     } else {
-      const newId = `session-${Date.now()}-${Math.random()}`;
+      // Create new session for new users or after clearing history
+      const newId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       localStorage.setItem("chatSessionId", newId);
       setSessionId(newId);
     }

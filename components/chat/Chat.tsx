@@ -19,30 +19,32 @@ export function Chat({
   const messageHistoryRef = useRef<Array<{ role: "user" | "assistant"; content: string; timestamp: string; messageId: string }>>([]);
   const userEmailRef = useRef<string>(email);
   const needsEmailRef = useRef<boolean>(!email);
+
+  console.log("[Chat:init]", { email, sessionId, needsEmail: !email });
   // Generate greeting based on available profile data
   const getGreeting = () => {
     if (!profile?.firstName) {
-      return "Hi there! Ask me anything about my work, experience, or projects.";
+      return "Hi there! Please share your email address to start chatting with me. 📧";
     }
 
     // The .filter(Boolean) removes all falsy values from the array, so if the firstName or lastName is not set, it will be removed
-    const fullName = [profile.firstName, profile.lastName]
+    const fullName = [profile.firstName]
       .filter(Boolean)
       .join(" ");
 
-    return `Hi! I'm ${fullName}. Ask me anything about my work, experience, or projects.`;
+    return `Yow! I'm ${fullName}. Please share your email to start our conversation.`;
   };
 
   const { control } = useChatKit({
     api: {
-      getClientSecret: async (_existingSecret) => {
+      getClientSecret: async (_existingSecret: string | undefined) => {
         // Use temporary email if we don't have one yet
         const tempEmail = userEmailRef.current || `temp-${Date.now()}@pending.local`;
         return createSession(tempEmail);
       },
     },
     startScreen: {
-      greeting: needsEmailRef.current 
+      greeting: needsEmailRef.current
         ? "Hi! To start chatting, please provide your email address so I can track our conversation."
         : getGreeting(),
       prompts: needsEmailRef.current ? [] : [
@@ -67,6 +69,199 @@ export function Chat({
           prompt: "Tell me more about yourself and your background",
         },
       ],
+    },
+    // Note: ChatKit event handlers depend on available events
+    // Common events might be: onMessage, onUserMessage, onResponse
+    // Fallback handler used by multiple ChatKit events
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onMessage: async (message: any) => {
+      // Debug: observe raw message events from ChatKit
+      try {
+        console.log("[Chat:onMessage] raw:", JSON.stringify(message));
+      } catch { }
+      const messageContent = message.content || message.text || "";
+      const messageRole = (message.role || "user") as "user" | "assistant";
+
+      console.log("[Chat:onMessage] Processing:", { role: messageRole, content: messageContent, needsEmail: needsEmailRef.current });
+
+      // Check if this is a user message and we need email
+      if (messageRole === "user" && needsEmailRef.current) {
+        console.log("[Chat:onMessage] Checking for email in message...");
+        const emailMatch = messageContent.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
+        console.log("[Chat:onMessage] Email match result:", emailMatch);
+        if (emailMatch) {
+          const extractedEmail = emailMatch[0];
+          userEmailRef.current = extractedEmail;
+          needsEmailRef.current = false;
+          localStorage.setItem("chatUserEmail", extractedEmail);
+          // Create initial conversation immediately using this user message
+          try {
+            const bootstrap = {
+              role: "user" as const,
+              content: messageContent,
+              timestamp: new Date().toISOString(),
+              messageId: `${Date.now()}-${Math.random()}`,
+            };
+            messageHistoryRef.current.push(bootstrap);
+            console.debug("[Chat:email-captured] creating conversation with bootstrap message", bootstrap);
+            const res = await fetch("/api/chat/log", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: extractedEmail,
+                sessionId,
+                messages: messageHistoryRef.current,
+              }),
+            });
+            if (!res.ok) {
+              const errText = await res.text();
+              console.error("/api/chat/log failed (email-captured):", res.status, errText);
+            }
+          } catch (e) {
+            console.error("Failed to create conversation on email capture:", e);
+          }
+          window.location.reload(); // Reload to update email state after creating conversation
+        }
+      }
+
+      // Capture messages
+      const messageData = {
+        role: messageRole,
+        content: messageContent,
+        timestamp: new Date().toISOString(),
+        messageId: message.id || message.messageId || `${Date.now()}-${Math.random()}`,
+      };
+
+      messageHistoryRef.current.push(messageData);
+      console.debug("[Chat:onMessage] appended to history:", messageData);
+
+      // Save to Sanity every message (use current email or temp)
+      try {
+        const currentEmail = userEmailRef.current || "pending@temp.local";
+        // Call API route to ensure write from server context
+        const payload = {
+          email: currentEmail,
+          sessionId,
+          messages: messageHistoryRef.current,
+        };
+        console.debug("[Chat:onMessage] POST /api/chat/log payload:", payload);
+        const res = await fetch("/api/chat/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error("/api/chat/log failed:", res.status, errText);
+        }
+        console.debug("[Chat:onMessage] /api/chat/log status:", res.status);
+      } catch (error) {
+        console.error("Failed to save message:", error);
+      }
+    },
+    // Some ChatKit versions emit user messages via a separate hook
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onUserMessage: async (message: any) => {
+      try {
+        console.debug("[Chat:onUserMessage] raw:", JSON.stringify(message));
+      } catch { }
+      const content = message.text || "";
+      const msg = {
+        role: "user" as const,
+        content,
+        timestamp: new Date().toISOString(),
+        messageId: message.id || `${Date.now()}-${Math.random()}`,
+      };
+      messageHistoryRef.current.push(msg);
+      console.debug("[Chat:onUserMessage] appended:", msg);
+      try {
+        const currentEmail = userEmailRef.current || "pending@temp.local";
+        const payload = { email: currentEmail, sessionId, messages: messageHistoryRef.current };
+        console.debug("[Chat:onUserMessage] POST /api/chat/log payload:", payload);
+        const res = await fetch("/api/chat/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error("/api/chat/log failed (onUserMessage):", res.status, errText);
+        }
+        console.debug("[Chat:onUserMessage] /api/chat/log status:", res.status);
+      } catch (error) {
+        console.error("Failed to save message (onUserMessage):", error);
+      }
+    },
+    // Assistant responses may arrive here depending on SDK
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onResponse: async (response: any) => {
+      try {
+        console.debug("[Chat:onResponse] raw:", JSON.stringify(response));
+      } catch { }
+      const content = response.text || "";
+      const msg = {
+        role: "assistant" as const,
+        content,
+        timestamp: new Date().toISOString(),
+        messageId: response.id || `${Date.now()}-${Math.random()}`,
+      };
+      messageHistoryRef.current.push(msg);
+      console.debug("[Chat:onResponse] appended:", msg);
+      try {
+        const currentEmail = userEmailRef.current || "pending@temp.local";
+        const payload = { email: currentEmail, sessionId, messages: messageHistoryRef.current };
+        console.debug("[Chat:onResponse] POST /api/chat/log payload:", payload);
+        const res = await fetch("/api/chat/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error("/api/chat/log failed (onResponse):", res.status, errText);
+        }
+        console.debug("[Chat:onResponse] /api/chat/log status:", res.status);
+      } catch (error) {
+        console.error("Failed to save message (onResponse):", error);
+      }
+    },
+    // Catch-all low-level stream events from ChatKit runtime
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onThreadEvent: async (event: any) => {
+      try {
+        console.debug("[Chat:onThreadEvent]", event?.type);
+      } catch { }
+      try {
+        // Attempt to normalize into a message when possible
+        const maybeRole = event?.message?.role as "user" | "assistant" | undefined;
+        const maybeText = event?.message?.content?.[0]?.text?.value
+          || event?.output_text
+          || event?.delta
+          || "";
+        if (!maybeText) return;
+        const msg = {
+          role: (maybeRole === "user" || maybeRole === "assistant") ? maybeRole : "assistant" as const,
+          content: String(maybeText),
+          timestamp: new Date().toISOString(),
+          messageId: `${Date.now()}-${Math.random()}`,
+        };
+        messageHistoryRef.current.push(msg);
+        console.debug("[Chat:onThreadEvent] appended:", msg);
+        const currentEmail = userEmailRef.current || "pending@temp.local";
+        const payload = { email: currentEmail, sessionId, messages: messageHistoryRef.current };
+        const res = await fetch("/api/chat/log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error("/api/chat/log failed (onThreadEvent):", res.status, errText);
+        }
+        console.debug("[Chat:onThreadEvent] /api/chat/log status:", res.status);
+      } catch (err) {
+        console.error("Failed to save message (onThreadEvent):", err);
+      }
     },
     // https://chatkit.studio/playground
     theme: {},
@@ -104,122 +299,111 @@ export function Chat({
     disclaimer: {
       text: "Disclaimer: This is my AI-powered twin. It may not be 100% accurate and should be verified for accuracy.",
     },
-  });
+  } as any);
 
-  // Capture messages using MutationObserver to watch for DOM changes
+  // Fallback: Poll DOM for messages since event handlers aren't working
   useEffect(() => {
-    const handleNewMessage = async (messageElement: HTMLElement) => {
+    console.log("[Chat:polling] Starting message polling...");
+    const seenMessages = new Set<string>();
+
+    const pollForMessages = async () => {
       try {
-        const messageText = messageElement.textContent || "";
-        if (!messageText.trim()) return;
+        // Look for all message elements in the ChatKit DOM
+        // ChatKit uses <article data-thread-turn="user|assistant"> for messages
+        const messageElements = document.querySelectorAll('article[data-thread-turn]');
 
-        // Determine role based on class names or data attributes
-        const classList = messageElement.className || "";
-        const isUser = classList.includes("user") || messageElement.getAttribute("data-role") === "user";
-        const role: "user" | "assistant" = isUser ? "user" : "assistant";
+        console.log(`[Chat:polling] Found ${messageElements.length} message elements`);
 
-        // Check if this is a user message and we need email
-        if (role === "user" && needsEmailRef.current) {
-          const emailMatch = messageText.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
-          if (emailMatch) {
-            const extractedEmail = emailMatch[0];
-            userEmailRef.current = extractedEmail;
-            needsEmailRef.current = false;
-            localStorage.setItem("chatUserEmail", extractedEmail);
-            
-            const bootstrap = {
-              role: "user" as const,
-              content: messageText.trim(),
-              timestamp: new Date().toISOString(),
-              messageId: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            };
-            messageHistoryRef.current.push(bootstrap);
-            
-            console.debug("[Chat:email-captured]", bootstrap);
-            
-            await fetch("/api/chat/log", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: extractedEmail,
-                sessionId,
-                messages: messageHistoryRef.current,
-              }),
-            });
-            
-            window.location.reload();
-            return;
+        for (const element of Array.from(messageElements)) {
+          const textContent = element.textContent?.trim() || "";
+          if (!textContent || seenMessages.has(textContent)) continue;
+
+          seenMessages.add(textContent);
+
+          // Determine if this is a user or assistant message from data-thread-turn attribute
+          const threadTurn = element.getAttribute('data-thread-turn');
+          const role: "user" | "assistant" = threadTurn === "user" ? "user" : "assistant";
+
+          console.log(`[Chat:polling] New ${role} message:`, textContent.substring(0, 100));
+
+          // Check for email in user messages
+          if (role === "user" && needsEmailRef.current) {
+            const emailMatch = textContent.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/);
+            if (emailMatch) {
+              const extractedEmail = emailMatch[0];
+              console.log(`[Chat:polling] 📧 EMAIL FOUND: ${extractedEmail}`);
+
+              userEmailRef.current = extractedEmail;
+              needsEmailRef.current = false;
+              localStorage.setItem("chatUserEmail", extractedEmail);
+
+              const bootstrap = {
+                role: "user" as const,
+                content: textContent,
+                timestamp: new Date().toISOString(),
+                messageId: `poll-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              };
+              messageHistoryRef.current.push(bootstrap);
+
+              console.log("[Chat:polling] Saving conversation with email...");
+              const res = await fetch("/api/chat/log", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  email: extractedEmail,
+                  sessionId,
+                  messages: messageHistoryRef.current,
+                }),
+              });
+
+              if (res.ok) {
+                console.log("[Chat:polling] ✅ Successfully saved to Sanity!");
+                setTimeout(() => window.location.reload(), 1000);
+              } else {
+                console.error("[Chat:polling] ❌ Failed to save:", await res.text());
+              }
+              return;
+            }
           }
+
+          // Save all messages
+          const messageData = {
+            role,
+            content: textContent,
+            timestamp: new Date().toISOString(),
+            messageId: `poll-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          };
+
+          messageHistoryRef.current.push(messageData);
+
+          const currentEmail = userEmailRef.current || "pending@temp.local";
+          console.log(`[Chat:polling] Saving message for ${currentEmail}...`);
+
+          await fetch("/api/chat/log", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: currentEmail,
+              sessionId,
+              messages: messageHistoryRef.current,
+            }),
+          });
         }
-
-        // Add message to history
-        const messageData = {
-          role,
-          content: messageText.trim(),
-          timestamp: new Date().toISOString(),
-          messageId: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        };
-
-        messageHistoryRef.current.push(messageData);
-        console.debug("[Chat:message-captured]", messageData);
-
-        // Save to Sanity
-        const currentEmail = userEmailRef.current || "pending@temp.local";
-        await fetch("/api/chat/log", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: currentEmail,
-            sessionId,
-            messages: messageHistoryRef.current,
-          }),
-        });
       } catch (error) {
-        console.error("[Chat:capture-error]", error);
+        console.error("[Chat:polling] Error:", error);
       }
     };
 
-    // Use MutationObserver to detect new messages in the DOM
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            const element = node as HTMLElement;
-            // Look for message elements (adjust selector based on ChatKit's DOM structure)
-            if (
-              element.matches('[data-message], .message, [role="article"]') ||
-              element.querySelector('[data-message], .message, [role="article"]')
-            ) {
-              const messageEl = element.matches('[data-message], .message, [role="article"]') 
-                ? element 
-                : element.querySelector('[data-message], .message, [role="article"]') as HTMLElement;
-              
-              if (messageEl) {
-                handleNewMessage(messageEl);
-              }
-            }
-          }
-        });
-      });
-    });
+    // Poll every 2 seconds
+    const intervalId = setInterval(pollForMessages, 2000);
 
-    // Start observing after a short delay to let ChatKit render
-    const timeoutId = setTimeout(() => {
-      const chatContainer = document.querySelector('[data-chatkit], .chatkit, [data-chat-container]');
-      if (chatContainer) {
-        observer.observe(chatContainer, {
-          childList: true,
-          subtree: true,
-        });
-        console.debug("[Chat:observer] Started watching for messages");
-      } else {
-        console.warn("[Chat:observer] Chat container not found");
-      }
-    }, 1000);
+    // Initial poll after 2 seconds
+    const timeoutId = setTimeout(pollForMessages, 2000);
 
     return () => {
+      clearInterval(intervalId);
       clearTimeout(timeoutId);
-      observer.disconnect();
+      console.log("[Chat:polling] Stopped polling");
     };
   }, [sessionId]);
 
