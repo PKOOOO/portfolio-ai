@@ -1,14 +1,11 @@
-import { Suspense } from "react";
 import { Sidebar, SidebarContent, SidebarRail } from "@/components/ui/sidebar";
-import ChatWrapper from "./chat/ChatWrapper";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar {...props}>
       <SidebarContent className="h-full w-full bg-white">
-        <Suspense fallback={<div>Loading...</div>}>
-          <ChatWrapper />
-        </Suspense>
+        {/* Sidebar content can be added here if needed.
+            AI chat now lives in the floating button + sheet instead of this sidebar. */}
       </SidebarContent>
       <SidebarRail />
     </Sidebar>

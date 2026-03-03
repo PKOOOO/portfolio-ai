@@ -14,6 +14,7 @@ import service from "./service";
 import siteSettings from "./siteSettings";
 import skill from "./skill";
 import testimonial from "./testimonial";
+import pageView from "./pageView";
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -32,5 +33,6 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     navigation,
     chatSession,
     conversation,
+    pageView,
   ],
 };
