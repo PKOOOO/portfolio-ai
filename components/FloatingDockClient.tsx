@@ -4,7 +4,7 @@ import { IconMenu2, IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { useState } from "react";
 import { DynamicIcon } from "./DynamicIcon";
-import { useSidebar } from "./ui/sidebar";
+
 
 interface NavItem {
   title?: string | null;
@@ -38,12 +38,9 @@ const getVisibleLinks = (links: DockLink[], maxItems: number) => {
 };
 
 export function FloatingDockClient({ navItems }: FloatingDockClientProps) {
-  const { open, isMobile, openMobile } = useSidebar();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [desktopMoreMenuOpen, setDesktopMoreMenuOpen] = useState(false);
   const [mobileMoreMenuOpen, setMobileMoreMenuOpen] = useState(false);
-
-  const isSidebarOpen = isMobile ? openMobile : open;
 
   const links: DockLink[] = navItems.map((item) => ({
     title: item.title || "",
@@ -59,11 +56,7 @@ export function FloatingDockClient({ navItems }: FloatingDockClientProps) {
     <>
       {/* Desktop: Horizontal dock - bottom left on md, bottom center on lg+ */}
       <div
-        className={`hidden md:block fixed z-30 transition-all duration-300 pointer-events-none group/dock ${
-          isSidebarOpen
-            ? "bottom-0 left-[calc(50%-var(--sidebar-width)/2)] -translate-x-1/2 pb-3"
-            : "bottom-4 md:left-4 md:translate-x-0 lg:left-1/2 lg:-translate-x-1/2"
-        }`}
+        className="hidden md:block fixed z-30 transition-all duration-300 pointer-events-none group/dock bottom-4 md:left-4 md:translate-x-0 lg:left-1/2 lg:-translate-x-1/2"
       >
         <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl md:rounded-2xl bg-white/20 dark:bg-black/30 hover:bg-white/30 dark:hover:bg-black/40 backdrop-blur-xl border border-white/30 dark:border-white/20 hover:border-white/40 dark:hover:border-white/30 shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] pointer-events-auto transition-all duration-300">
           {desktop.visible.map((item) => (
@@ -209,19 +202,17 @@ function DockIcon({
     const isHorizontal = direction === "horizontal";
     return (
       <div
-        className={`absolute px-3 py-1.5 ${isHorizontal ? "rounded-xl" : "rounded-lg"} bg-white/90 dark:bg-black/90 backdrop-blur-xl border border-white/40 dark:border-white/20 ${isHorizontal ? "text-xs md:text-sm" : "text-sm"} font-medium text-neutral-800 dark:text-neutral-200 whitespace-nowrap opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 pointer-events-none shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] ${
-          isHorizontal
+        className={`absolute px-3 py-1.5 ${isHorizontal ? "rounded-xl" : "rounded-lg"} bg-white/90 dark:bg-black/90 backdrop-blur-xl border border-white/40 dark:border-white/20 ${isHorizontal ? "text-xs md:text-sm" : "text-sm"} font-medium text-neutral-800 dark:text-neutral-200 whitespace-nowrap opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 pointer-events-none shadow-[0_8px_32px_0_rgba(0,0,0,0.2)] ${isHorizontal
             ? "-top-9 md:-top-12 left-1/2 -translate-x-1/2 group-hover:-translate-y-2"
             : "right-14 top-1/2 -translate-y-1/2 group-hover:-translate-x-1"
-        }`}
+          }`}
       >
         {item.title}
         <div
-          className={`absolute w-2 h-2 rotate-45 bg-white/90 dark:bg-black/90 ${
-            isHorizontal
+          className={`absolute w-2 h-2 rotate-45 bg-white/90 dark:bg-black/90 ${isHorizontal
               ? "-bottom-1 left-1/2 -translate-x-1/2 border-r border-b"
               : "-right-1 top-1/2 -translate-y-1/2 border-r border-t"
-          } border-white/40 dark:border-white/20`}
+            } border-white/40 dark:border-white/20`}
         />
       </div>
     );
@@ -239,11 +230,10 @@ function DockIcon({
     <>
       <div className={isVertical ? verticalIconClasses : horizontalIconClasses}>
         <div
-          className={`w-6 h-6 md:w-6 md:h-6 ${
-            isVertical
+          className={`w-6 h-6 md:w-6 md:h-6 ${isVertical
               ? "text-neutral-500 dark:text-neutral-300"
               : "text-neutral-400/60 group-hover/dock:text-neutral-500 dark:text-neutral-300/60 dark:group-hover/dock:text-neutral-300 group-hover:!text-neutral-600 dark:group-hover:!text-neutral-200 transition-colors duration-300"
-          }`}
+            }`}
         >
           {item.icon}
         </div>

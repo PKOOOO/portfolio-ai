@@ -2,12 +2,9 @@ import type { Metadata } from "next";
 import { draftMode } from "next/headers";
 import { VisualEditing } from "next-sanity/visual-editing";
 import { SanityLive } from "@/sanity/lib/live";
-import { AppSidebar } from "@/components/app-sidebar";
 import { DisableDraftMode } from "@/components/DisableDraftMode";
 import { FloatingDock } from "@/components/FloatingDock";
-import SidebarToggle from "@/components/SideBarToggle";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ChatStoreProvider } from "@/lib/store/chat-store-provider";
 import { ChatSheet } from "@/components/app/ChatSheet";
 import { FloatingChatTrigger } from "@/components/app/FloatingChatTrigger";
@@ -33,16 +30,9 @@ export default async function PortfolioLayout({
       disableTransitionOnChange
     >
       <ChatStoreProvider>
-        <SidebarProvider defaultOpen={false}>
-          <SidebarInset className="">
-            <MainContentWrapper>{children}</MainContentWrapper>
-          </SidebarInset>
+        <MainContentWrapper>{children}</MainContentWrapper>
 
-          <AppSidebar side="right" />
-
-          <FloatingDock />
-          <SidebarToggle />
-        </SidebarProvider>
+        <FloatingDock />
 
         <ChatSheet />
         <FloatingChatTrigger />
@@ -60,3 +50,4 @@ export default async function PortfolioLayout({
     </ThemeProvider>
   );
 }
+

@@ -13,7 +13,6 @@
   "dependencies": {
     "@ai-sdk/react": "^3.0.110",
     "@clerk/nextjs": "^6.34.0",
-    "@openai/chatkit-react": "^1.1.1",
     "@portabletext/react": "^4.0.3",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",

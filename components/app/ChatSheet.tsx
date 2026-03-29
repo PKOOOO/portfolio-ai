@@ -55,7 +55,7 @@ export function ChatSheet() {
     for (const msg of messages) {
       const parts = getToolParts(msg);
       for (const part of parts) {
-        toolsUsed.add(part.toolName);
+        if (part.toolName) toolsUsed.add(part.toolName);
       }
     }
 
@@ -77,7 +77,7 @@ export function ChatSheet() {
         firstMessage: firstMsg.slice(0, 200),
         messages: serializedMessages.slice(-20),
       }),
-    }).catch(() => {});
+    }).catch(() => { });
   }, [messages]);
 
   useEffect(() => {
